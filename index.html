@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#101418">
+<title>train.log</title>
+<style>
+:root{
+  --bg:#101418; --panel:#1A2027; --panel2:#20272F; --line:#2A323C;
+  --text:#E8ECF0; --dim:#8A96A3; --faint:#5B6672;
+  --amber:#FFB454; --amber-dim:#7A5626; --cyan:#4FD8C8; --cyan-dim:#1E5B54;
+  --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+body{
+  font-family:var(--sans); background:var(--bg); color:var(--text);
+  max-width:480px; margin:0 auto; min-height:100vh;
+  padding:calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 96px);
+  -webkit-font-smoothing:antialiased;
+}
+header{
+  border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-bottom:14px;
+  background:
+    linear-gradient(var(--panel),var(--panel)) padding-box,
+    repeating-linear-gradient(0deg,transparent 0 15px,rgba(138,150,163,.07) 15px 16px),
+    repeating-linear-gradient(90deg,transparent 0 15px,rgba(138,150,163,.07) 15px 16px);
+  background-color:var(--panel);
+}
+.brand{font-family:var(--mono); font-size:18px; letter-spacing:.5px}
+.brand .dot{color:var(--amber)}
+.sub{font-family:var(--mono); font-size:11px; color:var(--dim); margin-top:3px; letter-spacing:.4px}
+.weekline{display:flex; justify-content:space-between; align-items:baseline; margin-top:12px}
+.weektag{font-family:var(--mono); font-size:11px; color:var(--faint)}
+.weekpct{font-family:var(--mono); font-size:12px; color:var(--amber)}
+.strip{display:flex; gap:6px; margin:0 0 16px}
+.chip{
+  flex:1; border:1px solid var(--line); border-radius:10px; background:var(--panel);
+  padding:8px 0 7px; text-align:center; color:var(--dim); cursor:pointer;
+  font-family:var(--mono); font-size:11px; transition:border-color .15s;
+}
+.chip .d{display:block; font-size:12px; color:var(--text); margin-bottom:4px}
+.chip .st{display:inline-block; width:7px; height:7px; border-radius:50%; border:1.5px solid var(--faint)}
+.chip.partial .st{border-color:var(--amber)}
+.chip.done .st{background:var(--cyan); border-color:var(--cyan)}
+.chip.sel{border-color:var(--amber)}
+.chip.today .d{color:var(--amber)}
+.dayhead{display:flex; align-items:baseline; gap:10px; margin:4px 2px 10px}
+.ch{font-family:var(--mono); font-size:11px; color:var(--amber); letter-spacing:1px}
+.dayname{font-size:19px; font-weight:600}
+.daymeta{font-family:var(--mono); font-size:11px; color:var(--dim); margin-left:auto}
+.meter{display:flex; gap:4px; margin:0 2px 16px; height:5px}
+.meter i{flex:1; border-radius:2px; background:var(--panel2)}
+.meter i.on{background:var(--cyan)}
+section{margin-bottom:16px}
+.sechead{
+  display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--mono); font-size:11px; letter-spacing:1px; color:var(--faint);
+  padding:0 2px 7px; text-transform:uppercase;
+}
+.sechead .cnt{color:var(--dim)}
+.card{border:1px solid var(--line); border-radius:14px; background:var(--panel); overflow:hidden}
+.row{
+  display:flex; gap:12px; align-items:flex-start; padding:13px 14px;
+  border-top:1px solid var(--line); cursor:pointer; transition:opacity .15s;
+}
+.row:first-child{border-top:0}
+.tick{
+  flex-shrink:0; width:22px; height:22px; border-radius:50%; margin-top:1px;
+  border:1.5px solid var(--faint); display:flex; align-items:center; justify-content:center;
+  font-size:12px; color:var(--bg); transition:all .15s;
+}
+.row.on .tick{background:var(--cyan); border-color:var(--cyan)}
+.row.on{opacity:.45}
+.row.on .nm{text-decoration:line-through}
+.grow{flex:1; min-width:0}
+.nm{font-size:15px; line-height:1.35}
+.tip{font-size:12.5px; color:var(--dim); margin-top:2px; line-height:1.4}
+.vol{flex-shrink:0; font-family:var(--mono); font-size:12px; color:var(--amber); margin-top:2px; text-align:right; white-space:pre-line; line-height:1.5}
+.note{
+  border:1px dashed var(--line); border-radius:12px; padding:11px 14px;
+  font-size:13px; color:var(--dim); line-height:1.5; margin-bottom:16px;
+}
+.note b{color:var(--text); font-weight:600}
+.timer{
+  position:fixed; left:0; right:0; bottom:0; z-index:10;
+  background:rgba(16,20,24,.92); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);
+  padding:10px 16px calc(env(safe-area-inset-bottom) + 10px);
+}
+.timer-in{max-width:480px; margin:0 auto; display:flex; align-items:center; gap:10px}
+.tlabel{font-family:var(--mono); font-size:10px; letter-spacing:1px; color:var(--faint)}
+.tdisp{font-family:var(--mono); font-size:24px; min-width:76px; color:var(--text)}
+.tdisp.run{color:var(--amber)}
+.tbtn{
+  font-family:var(--mono); font-size:13px; color:var(--text);
+  background:var(--panel2); border:1px solid var(--line); border-radius:9px;
+  padding:9px 14px; cursor:pointer;
+}
+.tbtn:active{transform:scale(.96)}
+.tbtn.stop{color:var(--dim); margin-left:auto}
+footer{margin-top:6px; text-align:center}
+.reset{
+  font-family:var(--mono); font-size:11px; color:var(--faint);
+  background:none; border:none; cursor:pointer; padding:8px; letter-spacing:.5px;
+}
+@media (prefers-reduced-motion: reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">train<span class="dot">.</span>log</div>
+  <div class="sub">bodyweight · 3+1 days · posture daily</div>
+  <div class="weekline">
+    <span class="weektag" id="weektag">—</span>
+    <span class="weekpct" id="weekpct">0%</span>
+  </div>
+</header>
+
+<div class="strip" id="strip"></div>
+
+<div class="dayhead">
+  <span class="ch" id="ch">CH1</span>
+  <span class="dayname" id="dayname">—</span>
+  <span class="daymeta" id="daymeta"></span>
+</div>
+<div class="meter" id="meter"></div>
+
+<div id="sections"></div>
+
+<footer><button class="reset" id="reset">[ reset week ]</button></footer>
+
+<div class="timer">
+  <div class="timer-in">
+    <div>
+      <div class="tlabel">REST</div>
+      <div class="tdisp" id="tdisp">0:00</div>
+    </div>
+    <button class="tbtn" data-t="60">60s</button>
+    <button class="tbtn" data-t="90">90s</button>
+    <button class="tbtn stop" id="tstop">stop</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+var POSTURE = [
+  ["Chin tucks","2×10","Pull head straight back, like a double chin"],
+  ["Wall angels","2×10","Back on wall, slide arms up and down"],
+  ["Doorway chest stretch","2×30s\n/side","Forearm on frame, step forward"],
+  ["Cat-cow","10 reps","Slow, arch and round the spine"],
+  ["Bird dog","2×8\n/side","Opposite arm and leg, hold 2s"],
+  ["Hip flexor stretch","2×30s\n/side","Kneeling lunge, squeeze back glute"]
+];
+
+var DAYS = [
+ {id:"mon",lbl:"Mo",ch:"CH1",name:"Push + core",meta:"~40 min",type:"strength",ex:[
+   ["Push-ups","4×8–15","Knees if too hard, feet on chair if too easy"],
+   ["Pike push-ups","3×6–10","Hips high, head toward floor. Shoulders."],
+   ["Chair dips","3×8–12","Sturdy chair, elbows point back"],
+   ["Hollow body hold","3×20–40s","Lower back pressed into floor"],
+   ["Plank shoulder taps","3×20","Hips stay still, no rocking"]]},
+ {id:"tue",lbl:"Tu",ch:"REST",name:"Rest day",meta:"recovery",type:"rest",ex:[]},
+ {id:"wed",lbl:"We",ch:"CH2",name:"Legs + glutes",meta:"~45 min",type:"strength",ex:[
+   ["Hip thrusts","4×12–15","Shoulders on couch edge, squeeze 1s at top"],
+   ["Squats","3×15–20","3 seconds down, drive through heels"],
+   ["Bulgarian split squats","3×8–12\n/leg","Rear foot on chair, torso slightly forward"],
+   ["Step-ups","3×10\n/leg","Push through the heel, don't bounce"],
+   ["Side-lying leg raises","3×15\n/side","Slow. Hits the upper/side glute"],
+   ["Calf raises","3×15–20","On a step for full range"]]},
+ {id:"thu",lbl:"Th",ch:"REST",name:"Rest day",meta:"easy walk optional",type:"rest",ex:[]},
+ {id:"fri",lbl:"Fr",ch:"CH3",name:"Pull + full body",meta:"~40 min",type:"strength",ex:[
+   ["Table rows","4×8–12","Under a sturdy table, body straight"],
+   ["Prone Y-T-W raises","3×10","Face down, lift arms in Y, T, W"],
+   ["Superman hold","3×20–30s","Lower back and glutes"],
+   ["Burpees","3×10","Full push-up at the bottom"],
+   ["Side plank","3×20–30s\n/side","Straight line from head to feet"]]},
+ {id:"sat",lbl:"Sa",ch:"CH4",name:"HIIT circuit",meta:"optional · ~20 min",type:"hiit",ex:[
+   ["Jumping jacks","40s on\n20s off",""],
+   ["Mountain climbers","40s on\n20s off",""],
+   ["High knees","40s on\n20s off",""],
+   ["Squat jumps","40s on\n20s off",""],
+   ["Bicycle crunches","40s on\n20s off","3–4 rounds of the circuit"]]},
+ {id:"sun",lbl:"Su",ch:"REST",name:"Full rest",meta:"posture still counts",type:"rest",ex:[]}
+];
+
+var NOTES = {
+  strength:"Rest <b>60–90s</b> between sets. Hit the top of a rep range on all sets? Add reps or take the harder variation next time.",
+  rest:"Muscles grow on rest days. Do the posture reset, eat enough protein, and let the last session sink in.",
+  hiit:"Optional. Skip it if you're tired or busy, the three strength days do the main work. 40s work / 20s rest, 3–4 rounds."
+};
+
+var mem = {};
+var hasLocal = false;
+try{
+  var t="__t"; localStorage.setItem(t,"1"); localStorage.removeItem(t);
+  hasLocal = true;
+}catch(e){}
+var hasClaude = !!(window.storage && typeof window.storage.get === "function");
+
+function isoWeek(d){
+  var t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  var day=(t.getUTCDay()+6)%7;
+  t.setUTCDate(t.getUTCDate()-day+3);
+  var y=t.getUTCFullYear();
+  var jan4=new Date(Date.UTC(y,0,4));
+  var wk=1+Math.round(((t-jan4)/86400000-3+((jan4.getUTCDay()+6)%7))/7);
+  return y+"-W"+(wk<10?"0"+wk:wk);
+}
+
+var KEY="trainlog-v1";
+var state={week:isoWeek(new Date()),checks:{}};
+
+function saveNow(){
+  var raw=JSON.stringify(state);
+  if(hasClaude){
+    try{ window.storage.set(KEY,raw).catch(function(){}); }catch(e){}
+  }else if(hasLocal){
+    try{ localStorage.setItem(KEY,raw); }catch(e){}
+  }else{
+    mem[KEY]=raw;
+  }
+}
+var saveT=null;
+function save(){ if(saveT) clearTimeout(saveT); saveT=setTimeout(saveNow,400); }
+
+function applyLoaded(raw){
+  try{
+    var p=JSON.parse(raw);
+    if(p && p.week===state.week && p.checks) state=p;
+  }catch(e){}
+}
+
+var todayIdx=(new Date().getDay()+6)%7;
+var sel=todayIdx;
+
+function itemsOf(day){
+  var arr=[];
+  day.ex.forEach(function(_,i){arr.push(day.id+":w:"+i);});
+  POSTURE.forEach(function(_,i){arr.push(day.id+":p:"+i);});
+  return arr;
+}
+function doneCount(day){
+  var n=0; itemsOf(day).forEach(function(k){ if(state.checks[k]) n++; });
+  return n;
+}
+
+function el(tag,cls,html){
+  var e=document.createElement(tag);
+  if(cls) e.className=cls;
+  if(html!==undefined) e.innerHTML=html;
+  return e;
+}
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+
+function renderStrip(){
+  var strip=document.getElementById("strip");
+  strip.innerHTML="";
+  DAYS.forEach(function(day,i){
+    var total=itemsOf(day).length, dn=doneCount(day);
+    var c=el("div","chip"+(i===sel?" sel":"")+(i===todayIdx?" today":"")+
+      (dn===total?" done":(dn>0?" partial":"")));
+    c.innerHTML='<span class="d">'+day.lbl+'</span><span class="st"></span>';
+    c.onclick=function(){sel=i;render();};
+    strip.appendChild(c);
+  });
+  var done=0,total=0;
+  DAYS.forEach(function(day){total+=itemsOf(day).length;done+=doneCount(day);});
+  document.getElementById("weekpct").textContent=(total?Math.round(done/total*100):0)+"%";
+  document.getElementById("weektag").textContent="week "+state.week;
+}
+
+function renderList(parent,title,list,prefix,day){
+  var s=el("section");
+  var dn=0;
+  list.forEach(function(_,i){ if(state.checks[day.id+":"+prefix+":"+i]) dn++; });
+  s.appendChild(el("div","sechead",
+    "<span>"+title+"</span><span class='cnt'>"+dn+"/"+list.length+"</span>"));
+  var card=el("div","card");
+  list.forEach(function(ex,i){
+    var k=day.id+":"+prefix+":"+i;
+    var r=el("div","row"+(state.checks[k]?" on":""));
+    r.innerHTML='<span class="tick">'+(state.checks[k]?"✓":"")+'</span>'+
+      '<span class="grow"><span class="nm">'+esc(ex[0])+'</span>'+
+      (ex[2]?'<div class="tip">'+esc(ex[2])+'</div>':"")+'</span>'+
+      '<span class="vol">'+esc(ex[1])+'</span>';
+    r.onclick=function(){
+      if(state.checks[k]) delete state.checks[k]; else state.checks[k]=true;
+      save(); render();
+    };
+    card.appendChild(r);
+  });
+  s.appendChild(card);
+  parent.appendChild(s);
+}
+
+function render(){
+  renderStrip();
+  var day=DAYS[sel];
+  document.getElementById("ch").textContent=day.ch;
+  document.getElementById("dayname").textContent=day.name;
+  document.getElementById("daymeta").textContent=day.meta;
+
+  var meter=document.getElementById("meter");
+  meter.innerHTML="";
+  var keys=itemsOf(day);
+  keys.forEach(function(k){
+    var seg=el("i",state.checks[k]?"on":"");
+    meter.appendChild(seg);
+  });
+
+  var sec=document.getElementById("sections");
+  sec.innerHTML="";
+  sec.appendChild(el("div","note",NOTES[day.type]));
+  if(day.ex.length) renderList(sec,"Workout",day.ex,"w",day);
+  renderList(sec,"Posture reset · daily · ~10 min",POSTURE,"p",day);
+}
+
+document.getElementById("reset").onclick=function(){
+  if(confirm("Clear all checks for this week?")){
+    state.checks={}; save(); render();
+  }
+};
+
+var tInt=null,tLeft=0;
+var tdisp=document.getElementById("tdisp");
+function fmt(s){return Math.floor(s/60)+":"+("0"+(s%60)).slice(-2);}
+function beep(){
+  try{
+    var C=window.AudioContext||window.webkitAudioContext;
+    var c=new C(),o=c.createOscillator(),g=c.createGain();
+    o.connect(g);g.connect(c.destination);
+    o.frequency.value=880;g.gain.value=0.12;o.start();
+    setTimeout(function(){o.frequency.value=1175;},170);
+    setTimeout(function(){o.stop();c.close();},340);
+  }catch(e){}
+}
+function tickTimer(){
+  tLeft--;
+  if(tLeft<=0){
+    clearInterval(tInt);tInt=null;tLeft=0;
+    tdisp.classList.remove("run");beep();
+  }
+  tdisp.textContent=fmt(tLeft);
+}
+function startTimer(s){
+  if(tInt) clearInterval(tInt);
+  tLeft=s;tdisp.textContent=fmt(tLeft);tdisp.classList.add("run");
+  tInt=setInterval(tickTimer,1000);
+}
+document.querySelectorAll(".tbtn[data-t]").forEach(function(b){
+  b.onclick=function(){startTimer(parseInt(b.dataset.t,10));};
+});
+document.getElementById("tstop").onclick=function(){
+  if(tInt) clearInterval(tInt);
+  tInt=null;tLeft=0;tdisp.textContent="0:00";tdisp.classList.remove("run");
+};
+
+function boot(){ render(); }
+if(hasClaude){
+  try{
+    window.storage.get(KEY).then(function(r){
+      if(r && r.value) applyLoaded(r.value);
+    }).catch(function(){}).then(boot,boot);
+  }catch(e){ boot(); }
+}else{
+  if(hasLocal){
+    try{ var raw=localStorage.getItem(KEY); if(raw) applyLoaded(raw); }catch(e){}
+  }
+  boot();
+}
+</script>
+</body>
+</html>
